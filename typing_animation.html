@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             display: flex;
@@ -12,31 +13,38 @@
             font-family: 'Courier New', monospace;
             background-color: #1a1a1a;  /* Dark background */
             color: #e0e0e0;  /* Light text */
-            padding-top: 20px;
+            padding: 20px;
+            font-size: 16px;  /* Base font size */
         }
 
         .header {
-            font-size: 2em;
+            font-size: clamp(1.5rem, 5vw, 2rem);  /* Responsive font size */
             font-weight: bold;
             margin-bottom: 30px;
             color: #4a9eff;  /* Match cursor color */
             text-shadow: 0 0 10px rgba(74, 158, 255, 0.2);  /* Subtle glow */
             letter-spacing: 2px;
+            text-align: center;
         }
 
         .input-container {
             margin-bottom: 40px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            gap: 10px;
         }
 
         .input-container input {
-            padding: 8px;
+            padding: 12px;  /* Larger touch target */
             font-family: 'Courier New', monospace;
-            font-size: 16px;
-            margin-right: 10px;
+            font-size: clamp(14px, 4vw, 16px);
             background-color: #2d2d2d;  /* Dark input background */
             border: 1px solid #404040;  /* Subtle border */
             color: #e0e0e0;  /* Light text */
             outline: none;  /* Remove default focus outline */
+            flex: 1;
+            min-width: 0;  /* Prevents flex overflow */
         }
 
         .input-container input:focus {
@@ -45,13 +53,15 @@
         }
 
         .input-container button {
-            padding: 8px 16px;
+            padding: 12px 16px;
             font-family: 'Courier New', monospace;
+            font-size: clamp(14px, 4vw, 16px);
             cursor: pointer;
             background-color: #404040;  /* Dark button */
             color: #e0e0e0;  /* Light text */
             border: 1px solid #505050;
             transition: all 0.3s ease;
+            white-space: nowrap;
         }
 
         .input-container button:hover {
@@ -60,18 +70,25 @@
         }
 
         .signature-container {
-            text-align: left;
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .regards {
             margin-bottom: 10px;
             color: #b0b0b0;  /* Slightly dimmer text */
+            font-size: clamp(14px, 4vw, 16px);
         }
 
         .typing-text {
             position: relative;
             width: fit-content;
             color: #ffffff;  /* Bright white for typed text */
+            font-size: clamp(14px, 4vw, 16px);
         }
 
         .typing-text::after {
@@ -135,8 +152,6 @@
                 this.intendedText = intendedText;
                 this.currentText = '';
                 this.position = 0;
-                this.mistakes = 0;
-                this.maxMistakes = 15;
             }
 
             getTypo(letter) {
@@ -148,17 +163,22 @@
             async typeCharacter() {
                 const shouldMakeTypo = Math.random() < 0.45;
                 
-                if (shouldMakeTypo && this.mistakes < this.maxMistakes && qwertyMap[this.intendedText[this.position].toLowerCase()]) {
+                if (shouldMakeTypo && qwertyMap[this.intendedText[this.position].toLowerCase()]) {
+                    // Make typo
                     const typo = this.getTypo(this.intendedText[this.position]);
                     this.currentText += typo;
-                    this.mistakes++;
                     await this.updateText();
                     await this.delay(400);
+                    
+                    // Backspace the typo
                     await this.backspace();
+                    
+                    // Type the correct character
                     this.currentText += this.intendedText[this.position];
                     this.position++;
                     await this.updateText();
                 } else {
+                    // Type correct character
                     this.currentText += this.intendedText[this.position];
                     this.position++;
                     await this.updateText();
@@ -184,15 +204,9 @@
             }
 
             async start() {
-                while (this.position < this.intendedText.length && this.mistakes < this.maxMistakes) {
+                while (this.position < this.intendedText.length) {
                     await this.typeCharacter();
                     await this.delay(Math.random() * 150 + 50);
-                }
-                
-                if (this.mistakes >= this.maxMistakes) {
-                    while (this.currentText.length > 0) {
-                        await this.backspace();
-                    }
                 }
             }
         }
