@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Courier New', monospace;
+            background-color: #1a1a1a;  /* Dark background */
+            color: #e0e0e0;  /* Light text */
+            padding-top: 20px;
+        }
+
+        .header {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #4a9eff;  /* Match cursor color */
+            text-shadow: 0 0 10px rgba(74, 158, 255, 0.2);  /* Subtle glow */
+            letter-spacing: 2px;
+        }
+
+        .input-container {
+            margin-bottom: 40px;
+        }
+
+        .input-container input {
+            padding: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            margin-right: 10px;
+            background-color: #2d2d2d;  /* Dark input background */
+            border: 1px solid #404040;  /* Subtle border */
+            color: #e0e0e0;  /* Light text */
+            outline: none;  /* Remove default focus outline */
+        }
+
+        .input-container input:focus {
+            border-color: #505050;  /* Lighter border on focus */
+            box-shadow: 0 0 5px rgba(80, 80, 80, 0.5);  /* Subtle glow */
+        }
+
+        .input-container button {
+            padding: 8px 16px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            background-color: #404040;  /* Dark button */
+            color: #e0e0e0;  /* Light text */
+            border: 1px solid #505050;
+            transition: all 0.3s ease;
+        }
+
+        .input-container button:hover {
+            background-color: #505050;  /* Lighter on hover */
+            border-color: #606060;
+        }
+
+        .signature-container {
+            text-align: left;
+        }
+
+        .regards {
+            margin-bottom: 10px;
+            color: #b0b0b0;  /* Slightly dimmer text */
+        }
+
+        .typing-text {
+            position: relative;
+            width: fit-content;
+            color: #ffffff;  /* Bright white for typed text */
+        }
+
+        .typing-text::after {
+            content: "|";
+            position: absolute;
+            right: -8px;
+            animation: blink 0.7s infinite;
+            color: #4a9eff;  /* Blue cursor */
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Typo Simulator</div>
+    <div class="input-container">
+        <input type="text" id="nameInput" placeholder="Enter your name" value="Edgar Allan Poe">
+        <button onclick="startNewAnimation()">Typo it!</button>
+    </div>
+    <div class="signature-container">
+        <div class="regards">Best regards,</div>
+        <div class="typing-text" id="name"></div>
+    </div>
+
+    <script>
+        const qwertyMap = {
+            'a': ['s', 'q', 'z', 'w'],
+            'b': ['v', 'g', 'h', 'n'],
+            'c': ['x', 'd', 'v'],
+            'd': ['s', 'f', 'e', 'r', 'x', 'c'],
+            'e': ['w', 'r', 'd', 's', '3'],
+            'f': ['d', 'g', 'r', 't', 'v', 'c'],
+            'g': ['f', 'h', 't', 'y', 'b', 'v'],
+            'h': ['g', 'j', 'y', 'u', 'b', 'n'],
+            'i': ['u', 'o', 'k', 'j', '8'],
+            'j': ['h', 'k', 'u', 'n', 'm', 'y', 'i'],
+            'k': ['j', 'l', 'i', 'm'],
+            'l': ['k', 'o', 'p', ','],
+            'm': ['n', 'k', 'j'],
+            'n': ['b', 'm', 'j', 'h'],
+            'o': ['i', 'p', 'l', 'k', '9'],
+            'p': ['o', 'l', '0', '['],
+            'q': ['w', 'a', '1'],
+            'r': ['e', 't', 'f', 'd', '4'],
+            's': ['a', 'd', 'w', 'x', 'z'],
+            't': ['r', 'y', 'g', 'f', '5'],
+            'u': ['y', 'i', 'j', 'h', '7'],
+            'v': ['c', 'b', 'f', 'g'],
+            'w': ['q', 'e', 's', 'a', '2'],
+            'x': ['z', 'c', 's', 'd'],
+            'y': ['t', 'u', 'h', 'g', '6'],
+            'z': ['a', 's', 'x']
+        };
+
+        class TypingAnimation {
+            constructor(targetElement, intendedText) {
+                this.targetElement = targetElement;
+                this.intendedText = intendedText;
+                this.currentText = '';
+                this.position = 0;
+                this.mistakes = 0;
+                this.maxMistakes = 15;
+            }
+
+            getTypo(letter) {
+                if (!qwertyMap[letter.toLowerCase()]) return letter;
+                const possibleTypos = qwertyMap[letter.toLowerCase()];
+                return possibleTypos[Math.floor(Math.random() * possibleTypos.length)];
+            }
+
+            async typeCharacter() {
+                const shouldMakeTypo = Math.random() < 0.45;
+                
+                if (shouldMakeTypo && this.mistakes < this.maxMistakes && qwertyMap[this.intendedText[this.position].toLowerCase()]) {
+                    const typo = this.getTypo(this.intendedText[this.position]);
+                    this.currentText += typo;
+                    this.mistakes++;
+                    await this.updateText();
+                    await this.delay(400);
+                    await this.backspace();
+                    this.currentText += this.intendedText[this.position];
+                    this.position++;
+                    await this.updateText();
+                } else {
+                    this.currentText += this.intendedText[this.position];
+                    this.position++;
+                    await this.updateText();
+                }
+            }
+
+            async backspace() {
+                const backspaceCount = 1;
+                for (let i = 0; i < backspaceCount; i++) {
+                    this.currentText = this.currentText.slice(0, -1);
+                    await this.updateText();
+                    await this.delay(100);
+                }
+            }
+
+            async updateText() {
+                this.targetElement.textContent = this.currentText;
+                await this.delay(Math.random() * 100 + 50);
+            }
+
+            delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            async start() {
+                while (this.position < this.intendedText.length && this.mistakes < this.maxMistakes) {
+                    await this.typeCharacter();
+                    await this.delay(Math.random() * 150 + 50);
+                }
+                
+                if (this.mistakes >= this.maxMistakes) {
+                    while (this.currentText.length > 0) {
+                        await this.backspace();
+                    }
+                }
+            }
+        }
+
+        let currentAnimation = null;
+
+        function startNewAnimation() {
+            const nameElement = document.getElementById('name');
+            const inputElement = document.getElementById('nameInput');
+            nameElement.textContent = '';  // Clear previous text
+            
+            if (currentAnimation) {
+                // If there's a current animation, we'll just reset the text
+                nameElement.textContent = '';
+            }
+            
+            currentAnimation = new TypingAnimation(nameElement, inputElement.value);
+            currentAnimation.start();
+        }
+
+        // Start initial animation when page loads
+        window.onload = startNewAnimation;
+    </script>
+</body>
+</html> 
